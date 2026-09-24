@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.egg-info/
+
+.env
+logs/*.log
+
+mlruns/
+mlflow.db
+.pytest_cache/
+.coverage
+
+# DVC-tracked: models.dvc/data.dvc (committed pointers) track the actual
+# content-hashed files; the directories themselves aren't committed to git.
+/models
+/data
