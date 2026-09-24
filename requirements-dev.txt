@@ -1,0 +1,12 @@
+# Dev/test/lint only — never installed in the production image (§8's
+# Dockerfile installs requirements.txt alone). Install both locally with:
+#   pip install -r requirements.txt -r requirements-dev.txt
+
+pytest==9.1.1
+pytest-cov==7.1.0
+httpx==0.28.1        # FastAPI's TestClient needs this for integration tests
+
+black==26.5.1
+flake8==7.4.1
+isort==9.0.1
+pre-commit==4.6.2

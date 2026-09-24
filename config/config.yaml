@@ -1,0 +1,60 @@
+# Single source of truth for every path, parameter, and connection setting the
+# inference service uses. Nothing in app/ or src/ should hardcode a path or a
+# number that lives here — that's what makes dev/staging/prod swappable without
+# touching Python.
+#
+# Values wrapped in ${VAR} are read from the environment (see .env.example) —
+# used only for things that differ per-environment or must never be committed
+# (secrets, connection strings). Everything else (model paths, threshold) is a
+# checked-in fact about this specific trained model and belongs here, not in .env.
+
+model:
+  # sklearn Pipeline/estimator fitted in notebook 6 — loaded, never re-fit.
+  path: models/model.joblib
+  # Fitted ColumnTransformer (impute + scale + one-hot) from notebook 5.
+  preprocessor_path: models/preprocessor.joblib
+  # Ordered column names the model expects post-preprocessing.
+  feature_list_path: models/feature_list.json
+  # Model type, hyperparameters, and the tuned decision threshold (0.71).
+  run_config_path: models/run_config.json
+  # MLflow registry is the primary load source; the joblib path above is a
+  # documented fallback if the tracking server/registry is unreachable (see
+  # predict.py get_model()). "alias", not "stage" — Model Registry stages
+  # were deprecated in MLflow 2.9+ in favor of aliases; verified against the
+  # actually-installed mlflow==3.16.1 client rather than assumed from older
+  # docs (it still exposes transition_model_version_stage for back-compat,
+  # but set_registered_model_alias/get_model_version_by_alias is current).
+  registry:
+    name: olist-late-delivery
+    alias: production
+    tracking_uri: ${MLFLOW_TRACKING_URI}
+
+data:
+  # zip-code prefix -> mean lat/lng lookup; distance_km is derived from this at
+  # request time, same as at training time (Stage 4). Loaded once at startup.
+  zip_geoloc_path: data/zip_geoloc.csv
+
+database:
+  # Used for prediction logging (input, output, latency, model version), not
+  # for reading order rows at inference time — a new order has no DB row yet.
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  name: ${POSTGRES_DB}
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+  predictions_table: prediction_logs
+
+logging:
+  level: INFO
+  format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+  file: logs/service.log
+
+api:
+  host: 0.0.0.0
+  port: 8000
+
+monitoring:
+  # rough drift signal: training data's positive rate was ~9% (see README).
+  # if live predicted-positive rate drifts far from this with no code change,
+  # that's a prompt to investigate before trusting the model.
+  training_positive_rate: 0.09
