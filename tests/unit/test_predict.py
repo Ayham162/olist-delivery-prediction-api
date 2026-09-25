@@ -26,6 +26,4 @@ def test_predict_one_matches_verified_notebook_output(canonical_order):
     of pipeline.ipynb's own transform (max abs diff 0.0) before being
     hardcoded here — see TASK3_CHECKLIST.md step 2's sanity check."""
     result = predict_one(OrderInput(**canonical_order).model_dump())
-    # DELIBERATE BREAK for TASK3_CHECKLIST.md §9's "prove the pipeline stops
-    # on a red test" — reverted in the very next commit.
-    assert abs(result["probability"] - 0.9999) < 1e-9
+    assert abs(result["probability"] - CANONICAL_ORDER_EXPECTED_PROBABILITY) < 1e-9
