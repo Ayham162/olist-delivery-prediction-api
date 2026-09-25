@@ -47,3 +47,27 @@ class BatchPredictionRequest(BaseModel):
 
 class BatchPredictionResponse(BaseModel):
     predictions: List[PredictionResponse]
+
+
+class HealthResponse(BaseModel):
+    status: str = Field(description="'ok' or 'degraded'")
+    model_loaded: bool
+
+
+class ModelInfoResponse(BaseModel):
+    model_type: str
+    threshold: float
+    model_version: str
+    model_source: str = Field(description="'mlflow:<name>@<alias>' or 'joblib:local'")
+    feature_count: int
+
+
+class ValidationFailureResponse(BaseModel):
+    """Body shape for a 422 raised by the Great Expectations gate
+    (validation.DataValidationError) — distinct from FastAPI's own built-in
+    422 body shape for pydantic field errors, so callers can tell "your
+    request was malformed" apart from "your request was well-formed but the
+    data itself failed a quality check"."""
+
+    detail: str
+    failures: List[dict]

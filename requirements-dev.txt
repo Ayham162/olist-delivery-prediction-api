@@ -4,7 +4,10 @@
 
 pytest==9.1.1
 pytest-cov==7.1.0
-httpx==0.28.1        # FastAPI's TestClient needs this for integration tests
+httpx==0.28.1        # still a declared dependency of starlette/fastapi
+httpx2==2.13.1       # starlette.testclient now prefers this over plain httpx
+                     # (deprecation warning without it) — verified installing
+                     # it clears the warning, both packages coexist fine
 
 black==26.5.1
 flake8==7.4.1
