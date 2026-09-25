@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from inference_service import db
 from inference_service.logger import get_logger
@@ -54,6 +55,12 @@ app = FastAPI(
     "delivery date, with a probability.",
     lifespan=lifespan,
 )
+
+# Request count, latency histograms, and status-code/error breakdown at
+# GET /metrics, in Prometheus's own format — not hand-rolled, this library
+# already does it correctly (instrument() adds a middleware, expose() adds
+# the /metrics route that serves what it collected).
+Instrumentator().instrument(app).expose(app)
 
 
 @app.exception_handler(DataValidationError)
