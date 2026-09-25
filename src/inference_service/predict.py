@@ -20,27 +20,26 @@ logger = get_logger(__name__)
 
 # MLflow's own defaults (120s timeout, 7 retries with exponential backoff) mean
 # an unreachable tracking server hangs the service for several MINUTES before
-# the joblib fallback ever kicks in — measured, not assumed: an unreachable
-# server took over 90s across 5 retries before this was added. The fallback
-# is only worth having if it actually triggers fast; setdefault so a real
-# deployment can still override with its own values via the environment. Only
-# needs to run before mlflow itself is imported (a local import below, inside
-# _load_model_and_source, not at module level) — placed here, after all of
-# this module's own imports, rather than before them.
+# the joblib fallback ever kicks in. An unreachable server took over 90s
+# across 5 retries before this was added. The fallback only helps if it
+# triggers fast, so setdefault lets a real deployment still override these
+# via the environment. Needs to run before mlflow itself is imported (a
+# local import inside _load_model_and_source, not at module level), so it's
+# placed here, after this module's own imports, rather than before them.
 os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "3")
 os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "1")
 
 
 @lru_cache(maxsize=1)
 def _load_model_and_source():
-    """Tries the MLflow registry first (models:/<name>@<alias> — an alias,
+    """Tries the MLflow registry first (models:/<name>@<alias>, an alias,
     not a "stage": stages are deprecated as of MLflow 2.9+). Falls back to
     the local joblib path if the tracking server is unreachable, the
     registered model/alias doesn't exist yet, or MLFLOW_TRACKING_URI was
-    never set (config.yaml's ${MLFLOW_TRACKING_URI} stays a literal
-    unexpanded placeholder in that case — treated the same as "not
-    configured"). This is a documented fallback, not a silent one: it's
-    logged at WARNING so it's visible which source actually served a model."""
+    never set (config.yaml's ${MLFLOW_TRACKING_URI} then stays a literal
+    unexpanded placeholder, treated the same as "not configured"). This
+    fallback is documented, not silent: it logs at WARNING so it's visible
+    which source actually served a model."""
     cfg = get_config()
     registry_cfg = cfg.model.registry
     tracking_uri = getattr(registry_cfg, "tracking_uri", None)
@@ -56,7 +55,7 @@ def _load_model_and_source():
             return model, f"mlflow:{registry_cfg.name}@{registry_cfg.alias}"
         except Exception as exc:
             logger.warning(
-                "MLflow registry load failed (%s) — falling back to local joblib path",
+                "MLflow registry load failed (%s), falling back to local joblib path",
                 exc,
             )
 
@@ -70,9 +69,9 @@ def get_model():
 
 
 def get_model_source() -> str:
-    """'mlflow:<name>@<alias>' or 'joblib:local' — which of the two actually
-    served the loaded model. Surfaced on GET /model/info (§7), not stuffed
-    into every prediction's model_version to keep that field a stable,
+    """'mlflow:<name>@<alias>' or 'joblib:local': which of the two actually
+    served the loaded model. Surfaced on GET /model/info, not stuffed into
+    every prediction's model_version, to keep that field a stable,
     predictable shape."""
     return _load_model_and_source()[1]
 
@@ -90,18 +89,18 @@ def model_version() -> str:
 
 
 def predict_batch(orders: List[Dict]) -> List[Dict]:
-    """orders: raw order dicts (already pydantic-validated by schemas.OrderInput
-    for structure/types/ranges). Raises validation.DataValidationError if any
+    """orders: raw order dicts, already pydantic-validated by schemas.OrderInput
+    for structure/types/ranges. Raises validation.DataValidationError if any
     order fails the Great Expectations suite (category-membership checks
-    pydantic can't express) — that's a second, independent gate, not a
+    pydantic can't express). That's a second, independent gate, not a
     duplicate of pydantic's job. Returns one {late, probability, model_version}
     dict per order, same order as the input. Logs one line per order (input,
-    output, model version — the per-order request/response pair the task asks
+    output, model version: the per-order request/response pair the task asks
     for) plus one aggregate line for the call (count, total latency, positive
-    rate) since per-order latency isn't meaningful inside a single vectorized
-    batch transform/predict_proba call. The full input logged here duplicates
-    into the DB's prediction_logs table too (§7/§8) — that's for querying
-    later against ground truth, this is for tracing a specific request now."""
+    rate), since per-order latency isn't meaningful inside a single vectorized
+    batch transform/predict_proba call. The full input logged here also goes
+    into the DB's prediction_logs table: that's for querying later against
+    ground truth, this is for tracing a specific request now."""
     start = time.perf_counter()
 
     df = orders_to_frame(orders)

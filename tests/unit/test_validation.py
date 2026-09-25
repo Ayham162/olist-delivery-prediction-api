@@ -53,7 +53,7 @@ def test_invalid_payment_type_rejected():
 
 def test_batch_with_too_many_missing_values_rejected():
     """10% null in customer_state on a 10-row batch, against the 5%-tolerance
-    missing-rate expectation (MISSING_RATE_MOSTLY=0.95) — must reject the
+    missing-rate expectation (MISSING_RATE_MOSTLY=0.95). Must reject the
     whole batch, not silently let the nulls through."""
     rows = [
         {
@@ -84,8 +84,8 @@ def test_batch_with_too_many_missing_values_rejected():
 
 
 def test_batch_within_missing_rate_tolerance_passes():
-    """1 null out of 20 rows (5% missing) sits right at the tolerance edge -
-    should still pass, not reject on the first hint of any missing data."""
+    """1 null out of 20 rows (5% missing) sits right at the tolerance edge.
+    Should still pass, not reject on the first hint of any missing data."""
     rows = [
         {
             "customer_state": "SP",

@@ -1,15 +1,15 @@
-# Dev/test/lint only — never installed in the production image (§8's
+# Dev/test/lint only, never installed in the production image (the
 # Dockerfile installs requirements.txt alone). Install both locally with:
 #   pip install -r requirements.txt -r requirements-dev.txt
 
 pytest==9.1.1
 pytest-cov==7.1.0
-dvc==3.67.1          # CLI only (init/add/push/pull) — never imported by the
+dvc==3.67.1          # CLI only (init/add/push/pull), never imported by the
                      # running service, doesn't belong in the runtime image
 httpx==0.28.1        # still a declared dependency of starlette/fastapi
 httpx2==2.13.1       # starlette.testclient now prefers this over plain httpx
-                     # (deprecation warning without it) — verified installing
-                     # it clears the warning, both packages coexist fine
+                     # (deprecation warning without it); installing it clears
+                     # the warning, both packages coexist fine
 
 black==26.5.1
 flake8==7.4.1

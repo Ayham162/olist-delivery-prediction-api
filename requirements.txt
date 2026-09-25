@@ -1,17 +1,17 @@
-# Runtime dependencies only — what the service needs to actually serve
+# Runtime dependencies only: what the service needs to actually serve
 # predictions in a container. Nothing here is needed for lint/test/dev.
-# Every version below was installed and smoke-tested together in this repo's
-# .venv, not guessed — see TASK3_CHECKLIST.md step 0/§1 for how the exact
-# scikit-learn pin was discovered (model.joblib was pickled with 1.8.0;
-# an older sklearn silently... actually hard-errors on predict_proba,
-# which is the better failure mode, but a failure either way).
+# Every version below is installed and smoke-tested together in this repo's
+# .venv. scikit-learn is pinned to 1.8.0 because model.joblib was pickled
+# with that version. An older sklearn hard-errors on predict_proba instead
+# of silently misbehaving, which is the better failure mode, but still a
+# failure.
 
 # API
 fastapi==0.141.1
 uvicorn[standard]==0.53.0
 pydantic==2.13.5
 
-# ML / inference — scikit-learn MUST match the version model.joblib and
+# ML / inference. scikit-learn MUST match the version model.joblib and
 # preprocessor.joblib were pickled with, or predict_proba breaks outright.
 scikit-learn==1.8.0
 pandas==2.1.4
@@ -22,12 +22,12 @@ joblib==1.6.0
 PyYAML==6.0.3
 python-dotenv==1.0.0
 
-# Validation, tracking, registry — imported live by validation.py/predict.py.
+# Validation, tracking, registry: imported live by validation.py/predict.py.
 # NOT dvc: it's a CLI tool (dvc init/add/push/pull) for managing artifacts,
-# never imported by the running service — confirmed with a grep across src/
-# before moving it. Putting it here had pulled its entire dependency tree
-# (celery, gunicorn, matplotlib, graphene, databricks-sdk...) into the
-# production image for a tool the container never actually runs.
+# never imported by the running service. Putting it here would pull its
+# entire dependency tree (celery, gunicorn, matplotlib, graphene,
+# databricks-sdk...) into the production image for a tool the container
+# never actually runs.
 great-expectations==1.23.1
 mlflow==3.16.1
 

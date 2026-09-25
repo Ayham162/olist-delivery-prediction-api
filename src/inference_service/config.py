@@ -35,7 +35,7 @@ def _to_namespace(value: Any) -> Any:
 
 @lru_cache(maxsize=1)
 def get_config() -> SimpleNamespace:
-    """Process-wide singleton — config.yaml is parsed once, not per request."""
+    """Process-wide singleton: config.yaml is parsed once, not per request."""
     load_dotenv(PROJECT_ROOT / ".env")  # no-op if .env doesn't exist
     with open(DEFAULT_CONFIG_PATH, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)

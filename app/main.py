@@ -1,5 +1,5 @@
 """FastAPI service for the Olist late-delivery model. Thin HTTP layer over
-src/inference_service — no business/ML logic lives here, just request and
+src/inference_service: no business/ML logic lives here, just request and
 response handling, exception-to-HTTP-status translation, and startup wiring."""
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Force model/preprocessor/zip_geoloc load at startup, not lazily on the
-    # first request — a broken config/missing artifact should fail fast at
+    # first request. A broken config/missing artifact should fail fast at
     # boot with a clear log line, not surface as a confusing 500 on whoever
     # happens to send the first request.
     get_model()
@@ -57,7 +57,7 @@ app = FastAPI(
 )
 
 # Request count, latency histograms, and status-code/error breakdown at
-# GET /metrics, in Prometheus's own format — not hand-rolled, this library
+# GET /metrics, in Prometheus's own format. Not hand-rolled: this library
 # already does it correctly (instrument() adds a middleware, expose() adds
 # the /metrics route that serves what it collected).
 Instrumentator().instrument(app).expose(app)
@@ -65,9 +65,10 @@ Instrumentator().instrument(app).expose(app)
 
 @app.exception_handler(DataValidationError)
 async def data_validation_error_handler(request: Request, exc: DataValidationError):
-    """DataValidationError (the Great Expectations gate, §4) isn't a type
-    FastAPI knows about on its own — without this handler it would surface as
-    an unhandled 500. pydantic field errors (bad types/missing fields) don't
+    """DataValidationError (the Great Expectations gate in validation.py)
+    isn't a type FastAPI knows about on its own. Without this handler it
+    would surface as an unhandled 500. pydantic field errors (bad
+    types/missing fields) don't
     need a handler here: FastAPI already turns those into 422s automatically
     for any route parameter typed as a pydantic model."""
     logger.warning("rejected request at %s: %s", request.url.path, exc.failures)
@@ -80,8 +81,8 @@ async def data_validation_error_handler(request: Request, exc: DataValidationErr
 @app.exception_handler(Exception)
 async def unexpected_error_handler(request: Request, exc: Exception):
     """Anything else (a genuinely unexpected bug, a missing file, ...) gets
-    logged with the full exception here and returns a clean 500 body —
-    the client never sees a raw traceback."""
+    logged with the full exception here and returns a clean 500 body.
+    The client never sees a raw traceback."""
     logger.exception("unhandled error at %s", request.url.path)
     return JSONResponse(status_code=500, content={"detail": "internal server error"})
 

@@ -20,10 +20,9 @@ def test_predict_one_shape_and_types(canonical_order):
 
 
 def test_predict_one_matches_verified_notebook_output(canonical_order):
-    """This is Definition-of-Done item 3 ("pipeline output matches notebook
-    output") as a permanent, automated assertion, not a one-off script. The
-    expected value was cross-checked against a from-scratch reconstruction
-    of pipeline.ipynb's own transform (max abs diff 0.0) before being
-    hardcoded here — see TASK3_CHECKLIST.md step 2's sanity check."""
+    """Pipeline output matches notebook output, as a permanent automated
+    assertion instead of a one-off script. The expected value matches a
+    from-scratch reconstruction of pipeline.ipynb's own transform, max abs
+    diff 0.0."""
     result = predict_one(OrderInput(**canonical_order).model_dump())
     assert abs(result["probability"] - CANONICAL_ORDER_EXPECTED_PROBABILITY) < 1e-9

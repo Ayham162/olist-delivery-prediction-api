@@ -1,6 +1,6 @@
 """Prediction-log persistence to Postgres. This DB is never read at inference
-time (a new order has no DB row yet, see README) — it exists only so a
-prediction can be evaluated later against ground truth and to feed §10's
+time (a new order has no DB row yet, see README). It exists only so a
+prediction can be evaluated later against ground truth, and to feed
 monitoring. Because of that, a DB outage must degrade *logging*, not
 predictions: every function here is best-effort and swallows its own
 failures (logged as a warning), never raises into the request path."""
@@ -18,7 +18,7 @@ from inference_service.logger import get_logger
 
 logger = get_logger(__name__)
 
-CONNECT_TIMEOUT_SECONDS = 2  # fail fast — this must never make a request slow
+CONNECT_TIMEOUT_SECONDS = 2  # fail fast: this must never make a request slow
 
 
 def _connection_string() -> Optional[str]:
@@ -36,7 +36,7 @@ def _connection_string() -> Optional[str]:
 
 
 def ensure_table() -> None:
-    """Idempotent — also created by db/init.sql on first container boot, but
+    """Idempotent. Also created by db/init.sql on first container boot, but
     calling this at app startup too means local dev (against a Postgres
     outside Docker) doesn't need the init script to have run."""
     conn_str = _connection_string()

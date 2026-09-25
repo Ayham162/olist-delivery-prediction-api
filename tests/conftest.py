@@ -1,9 +1,8 @@
-"""Shared fixtures. CANONICAL_ORDER is the exact order used throughout manual
-verification during development (predict.predict_one gave probability
-0.6113450641808283 for it, cross-checked against a from-scratch
-reconstruction of pipeline.ipynb's own transform with max abs diff 0.0) —
-reused here so that verification is now a permanent, automated test instead
-of a one-off scratch script."""
+"""Shared fixtures. CANONICAL_ORDER is a fixed reference order: predict.predict_one
+gives probability 0.6113450641808283 for it, matching a from-scratch
+reconstruction of pipeline.ipynb's own transform to a max abs diff of 0.0.
+Reused here so that check is a permanent, automated test instead of a
+one-off scratch script."""
 
 import pytest
 

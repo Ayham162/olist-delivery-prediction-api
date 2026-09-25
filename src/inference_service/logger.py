@@ -1,4 +1,4 @@
-"""Process-wide logging setup — console + rotating file handler, configured
+"""Process-wide logging setup: console and rotating file handler, configured
 once from config.yaml. Every other module gets its logger from here; nothing
 in this service should use print()."""
 
@@ -12,12 +12,13 @@ from inference_service.config import get_config, resolve_path
 _configured = False
 
 # Configuring the root logger (below) means every third-party library's
-# loggers flow into our file too via propagation, not just our own modules'.
-# Most are quiet, but great_expectations logs INFO-level internal plugin
-# registration chatter ("Skipping registering function X because it is a
-# closure") on every import — measured directly: ~46KB of log from 2 HTTP
-# requests, almost entirely this. Silenced explicitly rather than lowering
-# our own level (which would also hide our own INFO logs).
+# loggers flow into this log file too via propagation, not just this
+# service's own modules. Most are quiet, but great_expectations logs
+# INFO-level internal plugin registration chatter ("Skipping registering
+# function X because it is a closure") on every import: about 46KB of log
+# from 2 HTTP requests, almost entirely this. Silenced explicitly rather
+# than lowering the root level, which would also hide this service's own
+# INFO logs.
 _NOISY_THIRD_PARTY_LOGGERS = ["great_expectations"]
 
 

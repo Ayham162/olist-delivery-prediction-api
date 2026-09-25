@@ -1,4 +1,4 @@
--- Mounted into /docker-entrypoint-initdb.d/ (docker-compose.yml) — the
+-- Mounted into /docker-entrypoint-initdb.d/ (docker-compose.yml). The
 -- official postgres image runs every .sql file there automatically, but
 -- only on a truly first boot (empty data volume). Schema kept identical to
 -- src/inference_service/db.py's ensure_table(), which also runs this at

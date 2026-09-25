@@ -1,10 +1,10 @@
-"""Great Expectations suite for incoming orders — deliberately scoped to what
+"""Great Expectations suite for incoming orders, deliberately scoped to what
 pydantic's type system can't express well: allowed categorical values (real
 Brazilian state codes, known payment-method types) and a tolerated missing
 rate on a batch request (pydantic's required-field check is strict per-row,
 not "at most 5% of this batch may be missing X"). Structural/range checks and
-strict per-row null rejection are schemas.OrderInput's job and are not
-duplicated here — see TASK3_CHECKLIST.md §4 for the split rationale.
+strict per-row null rejection are schemas.OrderInput's job instead, and are
+not duplicated here.
 
 On failure: reject (raise DataValidationError -> the API returns 422 with the
 failed-expectation detail), not flag-and-continue or silently default. A
@@ -27,7 +27,7 @@ from inference_service.logger import get_logger
 
 logger = get_logger(__name__)
 
-# ISO 3166-2:BR state codes — the real-world set of valid codes, not just the
+# ISO 3166-2:BR state codes: the real-world set of valid codes, not just the
 # subset that happened to appear in training data. A first-ever order from a
 # seller in a state absent from training is still a legitimate order; the
 # fitted OneHotEncoder already handles an unseen *category* gracefully
@@ -63,7 +63,7 @@ BRAZIL_STATE_CODES = [
     "TO",
 ]
 
-# Closed vocabulary defined by the payment platform itself — unlike state
+# Closed vocabulary defined by the payment platform itself. Unlike state
 # codes, there's no legitimate value outside this set (from feature_list.json).
 PAYMENT_TYPES = ["boleto", "credit_card", "debit_card", "voucher", "unknown"]
 
@@ -79,30 +79,30 @@ class DataValidationError(Exception):
 
 @lru_cache(maxsize=1)
 def _get_context():
-    """A fresh gx.get_context(mode="ephemeral") call creates a new, isolated
-    in-memory context each time — it is NOT a process-wide singleton. A
-    datasource registered on one context is invisible to another, which broke
-    batch.validate() when the batch definition and the suite came from two
-    separately-created contexts. Cache the context itself, once, and derive
-    everything else from this same instance."""
+    """gx.get_context(mode="ephemeral") isn't a process-wide singleton. Each
+    call makes a new isolated in-memory context, so a datasource registered
+    on one context is invisible to another; that breaks batch.validate() when
+    the batch definition and the suite come from two separately-created
+    contexts. Cache the context itself, once, and derive everything else
+    from this same instance."""
     return gx.get_context(mode="ephemeral")
 
 
 @lru_cache(maxsize=1)
 def _get_batch_definition():
-    """Reused across requests — safe: get_batch(batch_parameters=...) binds
-    fresh data each call, verified it doesn't stick to the first DataFrame."""
+    """Reused across requests. get_batch(batch_parameters=...) binds fresh
+    data each call, so it never sticks to the first DataFrame."""
     context = _get_context()
     data_source = context.data_sources.add_pandas("pandas")
     asset = data_source.add_dataframe_asset(name="orders")
     return asset.add_batch_definition_whole_dataframe("batch")
 
 
-# Tolerated missing rate on a batch (predict/batch) request — on a single-row
+# Tolerated missing rate on a batch (predict/batch) request. On a single-row
 # /predict request this is equivalent to "must be present" (pydantic already
 # guarantees that at the API boundary anyway), but on a real batch it allows
 # up to 5% missing without rejecting the whole batch outright. Scoped to the
-# same 3 columns GE already governs above, not pydantic's required fields —
+# same 3 columns GE already governs above, not pydantic's required fields:
 # a null there can never reach here through the normal API path (FastAPI's
 # automatic 422 catches it first), so re-checking non-nullness on those would
 # be pure duplication, not an added guarantee.

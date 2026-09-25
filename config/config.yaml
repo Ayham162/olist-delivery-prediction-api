@@ -1,15 +1,15 @@
 # Single source of truth for every path, parameter, and connection setting the
-# inference service uses. Nothing in app/ or src/ should hardcode a path or a
-# number that lives here — that's what makes dev/staging/prod swappable without
-# touching Python.
+# inference service uses. Nothing in app/ or src/ hardcodes a path or a
+# number that lives here. That is what makes dev/staging/prod swappable
+# without touching Python.
 #
-# Values wrapped in ${VAR} are read from the environment (see .env.example) —
-# used only for things that differ per-environment or must never be committed
-# (secrets, connection strings). Everything else (model paths, threshold) is a
-# checked-in fact about this specific trained model and belongs here, not in .env.
+# Values wrapped in ${VAR} come from the environment (see .env.example),
+# for things that differ per environment or must never be committed
+# (secrets, connection strings). Everything else (model paths, threshold) is
+# a checked-in fact about this specific trained model, so it belongs here.
 
 model:
-  # sklearn Pipeline/estimator fitted in notebook 6 — loaded, never re-fit.
+  # sklearn Pipeline/estimator fitted in notebook 6. Loaded, never re-fit.
   path: models/model.joblib
   # Fitted ColumnTransformer (impute + scale + one-hot) from notebook 5.
   preprocessor_path: models/preprocessor.joblib
@@ -17,26 +17,27 @@ model:
   feature_list_path: models/feature_list.json
   # Model type, hyperparameters, and the tuned decision threshold (0.71).
   run_config_path: models/run_config.json
-  # MLflow registry is the primary load source; the joblib path above is a
-  # documented fallback if the tracking server/registry is unreachable (see
-  # predict.py get_model()). "alias", not "stage" — Model Registry stages
-  # were deprecated in MLflow 2.9+ in favor of aliases; verified against the
-  # actually-installed mlflow==3.16.1 client rather than assumed from older
-  # docs (it still exposes transition_model_version_stage for back-compat,
-  # but set_registered_model_alias/get_model_version_by_alias is current).
+  # MLflow registry is the primary load source. The joblib path above is a
+  # fallback for when the tracking server/registry is unreachable (see
+  # predict.py get_model()). Uses an alias, not a stage: Model Registry
+  # stages were deprecated in MLflow 2.9+ in favor of aliases. The installed
+  # mlflow==3.16.1 client still exposes transition_model_version_stage for
+  # back-compat, but set_registered_model_alias/get_model_version_by_alias
+  # is current.
   registry:
     name: olist-late-delivery
     alias: production
     tracking_uri: ${MLFLOW_TRACKING_URI}
 
 data:
-  # zip-code prefix -> mean lat/lng lookup; distance_km is derived from this at
-  # request time, same as at training time (Stage 4). Loaded once at startup.
+  # zip-code prefix -> mean lat/lng lookup. distance_km is derived from this
+  # at request time, same as at training time (Stage 4). Loaded once at
+  # startup.
   zip_geoloc_path: data/zip_geoloc.csv
 
 database:
   # Used for prediction logging (input, output, latency, model version), not
-  # for reading order rows at inference time — a new order has no DB row yet.
+  # for reading order rows at inference time. A new order has no DB row yet.
   host: ${POSTGRES_HOST}
   port: ${POSTGRES_PORT}
   name: ${POSTGRES_DB}

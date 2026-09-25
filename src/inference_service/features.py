@@ -1,7 +1,7 @@
 """Assembles raw orders into the exact feature matrix model.joblib expects,
-using the already-fitted preprocessor.joblib (.transform only — never
-.fit/.fit_transform at inference, that would silently invalidate the encoders
-the model was trained against)."""
+using the already-fitted preprocessor.joblib. Only .transform is called,
+never .fit/.fit_transform at inference, since that would silently invalidate
+the encoders the model was trained against."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import pandas as pd
 from inference_service.config import get_config, resolve_path
 from inference_service.preprocessing import add_derived_features, add_distance
 
-# Same order/names as pipeline.ipynb cell 17 — this is what the fitted
+# Same order/names as pipeline.ipynb cell 17. This is what the fitted
 # ColumnTransformer was fit on, so it's what it must be given at inference.
 NUMERIC_FEATURES = [
     "n_items",
@@ -71,7 +71,7 @@ def derive_and_transform(df: pd.DataFrame) -> pd.DataFrame:
     Reproduces pipeline.ipynb Stage 4 end to end (add_derived_features ->
     add_distance -> preprocessor.transform). Split out from build_feature_matrix
     so callers can validate the raw df (validation.py) in between parsing and
-    transforming — GE needs the raw fields, not the derived/encoded ones."""
+    transforming. GE needs the raw fields, not the derived/encoded ones."""
     df = add_derived_features(df)
     df = add_distance(df)
 

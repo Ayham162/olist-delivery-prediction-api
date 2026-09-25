@@ -1,6 +1,6 @@
-"""Every expected value here was verified independently before being hardcoded
-(pd.Timestamp().day_name(), plain timedelta subtraction, a known city-pair
-distance) — not eyeballed from the function's own output."""
+"""Expected values here come from independent sources (pd.Timestamp().day_name(),
+plain timedelta subtraction, a known city-pair distance), not from the
+function's own output."""
 
 import pandas as pd
 

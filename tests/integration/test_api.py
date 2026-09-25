@@ -1,8 +1,6 @@
-"""End-to-end through the actual HTTP layer (FastAPI's TestClient — no real
+"""End-to-end through the actual HTTP layer (FastAPI's TestClient: no real
 socket, but the full app: routing, pydantic validation, exception handlers).
-Deferred from §6 until app/main.py existed; every case here was first
-verified manually against a live `uvicorn` process before being written
-down, including both 422 paths."""
+Covers both 422 paths."""
 
 from fastapi.testclient import TestClient
 
@@ -40,7 +38,7 @@ def test_predict_valid_order(canonical_order):
 def test_predict_missing_fields_returns_422_not_500():
     response = client.post("/predict", json={"n_items": 1})
     assert response.status_code == 422
-    # FastAPI's own pydantic-error shape, not our DataValidationError shape
+    # FastAPI's own pydantic-error shape, not the DataValidationError shape
     assert isinstance(response.json()["detail"], list)
 
 

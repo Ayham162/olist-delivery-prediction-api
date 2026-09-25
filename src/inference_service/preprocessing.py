@@ -1,6 +1,6 @@
-"""Feature derivations that mirror pipeline.ipynb Stage 4 exactly — same
-column names, same formulas, same zip_geoloc join — so a live request
-produces the same numbers the notebook produced for the same raw order.
+"""Feature derivations mirror pipeline.ipynb Stage 4 exactly: same column
+names, same formulas, same zip_geoloc join. A live request then produces
+the same numbers the notebook produced for the same raw order.
 Any change here must be made in the notebook too, or the two silently drift."""
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ from inference_service.config import get_config, resolve_path
 
 @lru_cache(maxsize=1)
 def get_zip_geoloc() -> pd.DataFrame:
-    """Zip-code prefix -> mean lat/lng lookup (pipeline.ipynb cell 7's output),
-    loaded once per process and cached — not once per request."""
+    """Zip-code prefix -> mean lat/lng lookup (pipeline.ipynb cell 7's output).
+    Loaded once per process and cached, not once per request."""
     cfg = get_config()
     return pd.read_csv(resolve_path(cfg.data.zip_geoloc_path))
 
@@ -47,9 +47,9 @@ def add_distance(df: pd.DataFrame) -> pd.DataFrame:
     """Mirrors pipeline.ipynb cell 15 (add_distance): join each side's zip
     prefix to its lat/lng via the same lookup used at training time, then
     haversine between them. A zip prefix absent from zip_geoloc.csv (never
-    seen in the training data) leaves distance_km as NaN here — the fitted
-    preprocessor's median imputer (same one used at training time) handles
-    that downstream, so there's no separate fallback to maintain here."""
+    seen in the training data) leaves distance_km as NaN here. The fitted
+    preprocessor's median imputer, the same one used at training time,
+    handles that downstream, so no separate fallback is needed here."""
     zip_geoloc = get_zip_geoloc()
     df = df.merge(
         zip_geoloc.rename(

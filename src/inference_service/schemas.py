@@ -1,8 +1,8 @@
 """Request/response contracts for the service. Structural and range validation
 lives here (pydantic, checked at the API boundary before anything touches the
 model). Category-membership and data-quality checks (allowed state codes,
-missing-rate thresholds) belong to the Great Expectations suite — deliberately
-not duplicated here, see TASK3_CHECKLIST.md step 4."""
+missing-rate thresholds) belong to the Great Expectations suite instead, in
+validation.py. They are deliberately not duplicated here."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 class OrderInput(BaseModel):
     """One new order, as it looks before delivery. These are exactly the raw
     fields pipeline.ipynb Stage 1 aggregates from Postgres for an existing
-    order — a brand-new order has no DB row yet, so the caller supplies them
+    order. A brand-new order has no DB row yet, so the caller supplies them
     directly (see README's "What the inference service actually needs")."""
 
     n_items: int = Field(ge=1, description="line items on the order")
@@ -67,7 +67,7 @@ class ModelInfoResponse(BaseModel):
 
 class ValidationFailureResponse(BaseModel):
     """Body shape for a 422 raised by the Great Expectations gate
-    (validation.DataValidationError) — distinct from FastAPI's own built-in
+    (validation.DataValidationError). Distinct from FastAPI's own built-in
     422 body shape for pydantic field errors, so callers can tell "your
     request was malformed" apart from "your request was well-formed but the
     data itself failed a quality check"."""
