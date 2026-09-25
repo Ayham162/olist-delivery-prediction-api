@@ -25,8 +25,21 @@ RUN pip install --no-cache-dir --no-deps -e .
 
 COPY app/ app/
 COPY config/ config/
-COPY models/ models/
-COPY data/ data/
+
+# models/ and data/ are DVC-tracked, not committed to git — a genuinely
+# fresh `git clone` doesn't have them (confirmed by actually cloning into a
+# scratch directory and checking, not assumed), so `COPY models/ models/`
+# from the host build context would fail on any machine but this one, where
+# they already happen to exist locally from an earlier `dvc pull`/copy. The
+# local DVC remote (../dvc-storage) is a path on this machine only, same
+# problem CI hit (see .github/workflows/ci.yml) — fetched from the same
+# GitHub Release asset here instead, so the image is self-sufficient on a
+# truly clean clone with nothing more than `docker compose up --build`.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fL https://github.com/Ayham162/olist-delivery-prediction-api/releases/download/ci-fixtures-v1/ci-artifacts.tar.gz \
+       | tar -xz models data \
+    && apt-get purge -y curl && apt-get autoremove -y
 
 ENV PYTHONUNBUFFERED=1
 
