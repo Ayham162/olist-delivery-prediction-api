@@ -41,3 +41,37 @@ def test_test_csv_has_expected_columns_and_label():
 
 def test_no_leakage_columns_in_model_input():
     assert LEAKAGE_COLUMNS.isdisjoint(set(RAW_FEATURE_COLS))
+
+
+def test_no_unexpected_nulls_in_required_columns():
+    """Checked the real data first (0% null rate on every one of these in
+    03_test.csv) rather than assuming — this locks that fact in so a future
+    re-run of pipeline.ipynb can't silently introduce missing values Stage 4
+    never accounted for."""
+    df = pd.read_csv(TEST_CSV)
+    required_non_null = [
+        "n_items",
+        "total_price",
+        "total_freight_value",
+        "customer_state",
+        "seller_state",
+        "main_payment_type",
+        "max_installments",
+        "n_payment_methods",
+    ]
+    for col in required_non_null:
+        assert df[col].isna().mean() == 0, f"unexpected nulls in {col}"
+
+
+def test_numeric_columns_within_business_rule_ranges():
+    """Bounds are business rules (an order can't have zero items, a price
+    can't be negative), not just "whatever the current data happens to
+    show" — would still catch a real data-quality regression even if the
+    observed values change on a future pipeline.ipynb re-run."""
+    df = pd.read_csv(TEST_CSV)
+    assert (df["n_items"] >= 1).all()
+    assert (df["max_installments"] >= 1).all()
+    assert (df["n_payment_methods"] >= 1).all()
+    assert (df["total_price"] >= 0).all()
+    assert (df["total_freight_value"] >= 0).all()
+    assert (df["total_weight_g"] >= 0).all()

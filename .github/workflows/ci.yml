@@ -44,8 +44,32 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     needs: [lint, test]
+    # write access to GHCR - only actually used on a push (see the push step's
+    # own `if`); a pull_request's default GITHUB_TOKEN is read-only anyway,
+    # so this permission is a no-op there, not a security gap.
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Fetch model/data artifacts
         run: curl -fL "$CI_FIXTURES_URL" | tar -xz
-      - run: docker build -t olist-delivery-prediction-api .
+      - name: Build image
+        run: |
+          docker build \
+            -t ghcr.io/ayham162/olist-delivery-prediction-api:latest \
+            -t ghcr.io/ayham162/olist-delivery-prediction-api:${{ github.sha }} \
+            .
+      # Push only on an actual push to this repo (never on a pull_request -
+      # PRs from forks get a read-only GITHUB_TOKEN, and pushing an image
+      # built from an unreviewed PR would be bad practice regardless).
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push image
+        if: github.event_name == 'push'
+        run: docker push ghcr.io/ayham162/olist-delivery-prediction-api --all-tags

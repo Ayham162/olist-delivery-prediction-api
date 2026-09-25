@@ -1,8 +1,10 @@
 """Great Expectations suite for incoming orders — deliberately scoped to what
 pydantic's type system can't express well: allowed categorical values (real
-Brazilian state codes, known payment-method types). Structural/range checks
-(required fields present, numeric bounds) are schemas.OrderInput's job and
-are not duplicated here — see TASK3_CHECKLIST.md §4 for the split rationale.
+Brazilian state codes, known payment-method types) and a tolerated missing
+rate on a batch request (pydantic's required-field check is strict per-row,
+not "at most 5% of this batch may be missing X"). Structural/range checks and
+strict per-row null rejection are schemas.OrderInput's job and are not
+duplicated here — see TASK3_CHECKLIST.md §4 for the split rationale.
 
 On failure: reject (raise DataValidationError -> the API returns 422 with the
 failed-expectation detail), not flag-and-continue or silently default. A
@@ -16,7 +18,10 @@ from typing import Dict, List
 
 import great_expectations as gx
 import pandas as pd
-from great_expectations.expectations import ExpectColumnValuesToBeInSet
+from great_expectations.expectations import (
+    ExpectColumnValuesToBeInSet,
+    ExpectColumnValuesToNotBeNull,
+)
 
 from inference_service.logger import get_logger
 
@@ -93,21 +98,32 @@ def _get_batch_definition():
     return asset.add_batch_definition_whole_dataframe("batch")
 
 
+# Tolerated missing rate on a batch (predict/batch) request — on a single-row
+# /predict request this is equivalent to "must be present" (pydantic already
+# guarantees that at the API boundary anyway), but on a real batch it allows
+# up to 5% missing without rejecting the whole batch outright. Scoped to the
+# same 3 columns GE already governs above, not pydantic's required fields —
+# a null there can never reach here through the normal API path (FastAPI's
+# automatic 422 catches it first), so re-checking non-nullness on those would
+# be pure duplication, not an added guarantee.
+MISSING_RATE_MOSTLY = 0.95
+
+
 @lru_cache(maxsize=1)
 def _get_suite():
     context = _get_context()
     suite = context.suites.add(gx.ExpectationSuite(name="order_input_suite"))
-    suite.add_expectation(
-        ExpectColumnValuesToBeInSet(
-            column="customer_state", value_set=BRAZIL_STATE_CODES
+    for column, value_set in (
+        ("customer_state", BRAZIL_STATE_CODES),
+        ("seller_state", BRAZIL_STATE_CODES),
+        ("main_payment_type", PAYMENT_TYPES),
+    ):
+        suite.add_expectation(
+            ExpectColumnValuesToNotBeNull(column=column, mostly=MISSING_RATE_MOSTLY)
         )
-    )
-    suite.add_expectation(
-        ExpectColumnValuesToBeInSet(column="seller_state", value_set=BRAZIL_STATE_CODES)
-    )
-    suite.add_expectation(
-        ExpectColumnValuesToBeInSet(column="main_payment_type", value_set=PAYMENT_TYPES)
-    )
+        suite.add_expectation(
+            ExpectColumnValuesToBeInSet(column=column, value_set=value_set)
+        )
     return suite
 
 
