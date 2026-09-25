@@ -1,6 +1,7 @@
 """Schema/quality checks on the training-time data itself — distinct from
 tests/unit (which tests our code) and validation.py (which gates live
 requests). This is about the data pipeline.ipynb actually produced."""
+
 import pandas as pd
 
 from inference_service.config import PROJECT_ROOT
@@ -27,8 +28,12 @@ def test_test_csv_has_expected_columns_and_label():
     assert df["late"].dropna().isin([0, 1]).all()
 
     required = [
-        "n_items", "total_price", "customer_state", "seller_state",
-        "order_purchase_timestamp", "order_estimated_delivery_date",
+        "n_items",
+        "total_price",
+        "customer_state",
+        "seller_state",
+        "order_purchase_timestamp",
+        "order_estimated_delivery_date",
     ]
     for col in required:
         assert col in df.columns, f"missing expected column: {col}"

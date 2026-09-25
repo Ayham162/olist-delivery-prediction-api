@@ -9,6 +9,22 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.black]
+# Explicit, not left to black's own default — the installed black (26.5.1)
+# defaults to targeting Python 3.15 syntax, newer than what this project
+# actually runs (3.12, per Dockerfile/requires-python). Left implicit, black
+# warned it "cannot parse code formatted for Python 3.15" when checking
+# under the 3.12 interpreter — this pin is what fixes that, not a style
+# preference.
+target-version = ["py312"]
+
+[tool.isort]
+# isort's own default wrap style fights black's (confirmed: isort wanted to
+# rewrap app/main.py's multi-import lines into a format black would then
+# immediately want to rewrap back) — "black" is isort's own built-in profile
+# for exactly this, not a custom style choice.
+profile = "black"
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

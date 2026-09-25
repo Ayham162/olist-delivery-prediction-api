@@ -1,5 +1,6 @@
 """Loads model.joblib + the tuned threshold once, and turns raw orders into
 predictions. The only module that touches the model object; never re-fits."""
+
 from __future__ import annotations
 
 import json
@@ -10,21 +11,24 @@ from typing import Dict, List
 
 import joblib
 
-# MLflow's own defaults (120s timeout, 7 retries with exponential backoff) mean
-# an unreachable tracking server hangs the service for several MINUTES before
-# the joblib fallback ever kicks in — measured, not assumed: an unreachable
-# server took over 90s across 5 retries before this was added. The fallback
-# is only worth having if it actually triggers fast; setdefault so a real
-# deployment can still override with its own values via the environment.
-os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "3")
-os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "1")
-
 from inference_service.config import get_config, resolve_path
 from inference_service.features import derive_and_transform, orders_to_frame
 from inference_service.logger import get_logger
 from inference_service.validation import validate_orders
 
 logger = get_logger(__name__)
+
+# MLflow's own defaults (120s timeout, 7 retries with exponential backoff) mean
+# an unreachable tracking server hangs the service for several MINUTES before
+# the joblib fallback ever kicks in — measured, not assumed: an unreachable
+# server took over 90s across 5 retries before this was added. The fallback
+# is only worth having if it actually triggers fast; setdefault so a real
+# deployment can still override with its own values via the environment. Only
+# needs to run before mlflow itself is imported (a local import below, inside
+# _load_model_and_source, not at module level) — placed here, after all of
+# this module's own imports, rather than before them.
+os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "3")
+os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "1")
 
 
 @lru_cache(maxsize=1)
@@ -52,7 +56,8 @@ def _load_model_and_source():
             return model, f"mlflow:{registry_cfg.name}@{registry_cfg.alias}"
         except Exception as exc:
             logger.warning(
-                "MLflow registry load failed (%s) — falling back to local joblib path", exc
+                "MLflow registry load failed (%s) — falling back to local joblib path",
+                exc,
             )
 
     model = joblib.load(resolve_path(cfg.model.path))
@@ -120,7 +125,10 @@ def predict_batch(orders: List[Dict]) -> List[Dict]:
     latency_ms = (time.perf_counter() - start) * 1000
     logger.info(
         "predicted %d order(s) in %.1fms | positive_rate=%.3f | model=%s",
-        len(orders), latency_ms, float(late.mean()), version,
+        len(orders),
+        latency_ms,
+        float(late.mean()),
+        version,
     )
 
     return results

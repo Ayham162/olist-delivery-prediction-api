@@ -6,6 +6,7 @@ the "production" alias at.
 
 Usage: python scripts/register_model.py
 """
+
 from __future__ import annotations
 
 import sys
@@ -13,13 +14,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-import json
+import json  # noqa: E402 - must follow the sys.path.insert above
 
-import joblib
-import mlflow
-from mlflow import MlflowClient
+import joblib  # noqa: E402
+import mlflow  # noqa: E402
+from mlflow import MlflowClient  # noqa: E402
 
-from inference_service.config import get_config, resolve_path
+from inference_service.config import get_config, resolve_path  # noqa: E402
 
 EXPERIMENT_NAME = "olist-late-delivery"
 REGISTERED_MODEL_NAME = "olist-late-delivery"
@@ -57,7 +58,10 @@ def main() -> None:
     client.set_registered_model_alias(REGISTERED_MODEL_NAME, ALIAS, latest.version)
 
     print(f"run_id={run_id}")
-    print(f"registered {REGISTERED_MODEL_NAME} version {latest.version}, alias '{ALIAS}' -> models:/{REGISTERED_MODEL_NAME}@{ALIAS}")
+    print(
+        f"registered {REGISTERED_MODEL_NAME} version {latest.version}, "
+        f"alias '{ALIAS}' -> models:/{REGISTERED_MODEL_NAME}@{ALIAS}"
+    )
 
 
 if __name__ == "__main__":

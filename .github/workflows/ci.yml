@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  # models/, data/, and notebooks/artifacts/03_test.csv are DVC-tracked, not
+  # committed to git (see TASK3_CHECKLIST.md §4) — a plain checkout doesn't
+  # have them. The DVC remote used for local dev (../dvc-storage) is a local
+  # folder, unreachable from GitHub's runners; a real deployment would `dvc
+  # pull` from a cloud-backed remote (S3/GCS) using credentials in repo
+  # secrets, which needs cloud infrastructure not provisioned for this
+  # exercise. This release asset is the honest stand-in: same artifacts,
+  # fetched over plain HTTPS instead of a `dvc pull` we can't authenticate.
+  CI_FIXTURES_URL: https://github.com/${{ github.repository }}/releases/download/ci-fixtures-v1/ci-artifacts.tar.gz
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: black --check app src tests scripts
+      - run: isort --check-only app src tests scripts
+      - run: flake8 app src tests scripts
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pip install --no-deps -e .
+      - name: Fetch model/data artifacts
+        run: curl -fL "$CI_FIXTURES_URL" | tar -xz
+      - run: pytest
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch model/data artifacts
+        run: curl -fL "$CI_FIXTURES_URL" | tar -xz
+      - run: docker build -t olist-delivery-prediction-api .

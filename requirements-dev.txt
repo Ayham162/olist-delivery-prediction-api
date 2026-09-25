@@ -4,6 +4,8 @@
 
 pytest==9.1.1
 pytest-cov==7.1.0
+dvc==3.67.1          # CLI only (init/add/push/pull) — never imported by the
+                     # running service, doesn't belong in the runtime image
 httpx==0.28.1        # still a declared dependency of starlette/fastapi
 httpx2==2.13.1       # starlette.testclient now prefers this over plain httpx
                      # (deprecation warning without it) — verified installing

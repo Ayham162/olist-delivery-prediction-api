@@ -3,6 +3,7 @@ socket, but the full app: routing, pydantic validation, exception handlers).
 Deferred from §6 until app/main.py existed; every case here was first
 verified manually against a live `uvicorn` process before being written
 down, including both 422 paths."""
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -53,7 +54,10 @@ def test_predict_bad_state_code_returns_422_with_failure_detail(canonical_order)
 
 
 def test_predict_batch(canonical_order):
-    response = client.post("/predict/batch", json={"orders": [_json_safe(canonical_order), _json_safe(canonical_order)]})
+    response = client.post(
+        "/predict/batch",
+        json={"orders": [_json_safe(canonical_order), _json_safe(canonical_order)]},
+    )
     assert response.status_code == 200
     predictions = response.json()["predictions"]
     assert len(predictions) == 2
@@ -62,4 +66,6 @@ def test_predict_batch(canonical_order):
 def _json_safe(order: dict) -> dict:
     """canonical_order's timestamps are already ISO strings, but datetime
     objects (if a test builds one directly) don't survive json= as-is."""
-    return {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in order.items()}
+    return {
+        k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in order.items()
+    }

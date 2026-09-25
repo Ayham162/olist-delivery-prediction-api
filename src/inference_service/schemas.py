@@ -3,6 +3,7 @@ lives here (pydantic, checked at the API boundary before anything touches the
 model). Category-membership and data-quality checks (allowed state codes,
 missing-rate thresholds) belong to the Great Expectations suite — deliberately
 not duplicated here, see TASK3_CHECKLIST.md step 4."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -27,7 +28,9 @@ class OrderInput(BaseModel):
     max_installments: int = Field(ge=1)
     n_payment_methods: int = Field(ge=1)
     main_payment_type: str = Field(min_length=1)
-    customer_state: str = Field(min_length=2, max_length=2, description="2-letter Brazilian state code")
+    customer_state: str = Field(
+        min_length=2, max_length=2, description="2-letter Brazilian state code"
+    )
     customer_zip_code_prefix: int = Field(ge=0)
     seller_state: str = Field(min_length=2, max_length=2)
     seller_zip_code_prefix: int = Field(ge=0)

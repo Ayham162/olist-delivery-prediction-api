@@ -8,6 +8,7 @@ On failure: reject (raise DataValidationError -> the API returns 422 with the
 failed-expectation detail), not flag-and-continue or silently default. A
 wrong guess at customer_state shouldn't produce a confident-looking
 prediction on bad data."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -28,9 +29,33 @@ logger = get_logger(__name__)
 # (handle_unknown="ignore"). This check is a different question: "is this a
 # real code at all," e.g. catching a typo'd "ZZ".
 BRAZIL_STATE_CODES = [
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
-    "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC",
-    "SP", "SE", "TO",
+    "AC",
+    "AL",
+    "AP",
+    "AM",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MT",
+    "MS",
+    "MG",
+    "PA",
+    "PB",
+    "PR",
+    "PE",
+    "PI",
+    "RJ",
+    "RN",
+    "RS",
+    "RO",
+    "RR",
+    "SC",
+    "SP",
+    "SE",
+    "TO",
 ]
 
 # Closed vocabulary defined by the payment platform itself — unlike state
@@ -73,7 +98,9 @@ def _get_suite():
     context = _get_context()
     suite = context.suites.add(gx.ExpectationSuite(name="order_input_suite"))
     suite.add_expectation(
-        ExpectColumnValuesToBeInSet(column="customer_state", value_set=BRAZIL_STATE_CODES)
+        ExpectColumnValuesToBeInSet(
+            column="customer_state", value_set=BRAZIL_STATE_CODES
+        )
     )
     suite.add_expectation(
         ExpectColumnValuesToBeInSet(column="seller_state", value_set=BRAZIL_STATE_CODES)

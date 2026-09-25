@@ -1,6 +1,7 @@
 """Loads config/config.yaml once per process, resolves relative paths against
 the repo root (not the process's CWD, which varies between pytest/uvicorn/
 Docker), and expands ${VAR} placeholders from the environment (.env first)."""
+
 from __future__ import annotations
 
 import os

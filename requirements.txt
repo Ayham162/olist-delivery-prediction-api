@@ -22,8 +22,12 @@ joblib==1.6.0
 PyYAML==6.0.3
 python-dotenv==1.0.0
 
-# Data versioning, validation, tracking, registry
-dvc==3.67.1
+# Validation, tracking, registry — imported live by validation.py/predict.py.
+# NOT dvc: it's a CLI tool (dvc init/add/push/pull) for managing artifacts,
+# never imported by the running service — confirmed with a grep across src/
+# before moving it. Putting it here had pulled its entire dependency tree
+# (celery, gunicorn, matplotlib, graphene, databricks-sdk...) into the
+# production image for a tool the container never actually runs.
 great-expectations==1.23.1
 mlflow==3.16.1
 

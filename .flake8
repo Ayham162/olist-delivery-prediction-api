@@ -1,0 +1,10 @@
+[flake8]
+# 88, not flake8's own default of 79 — matches black's line length. Without
+# this, black-formatted code (up to 88 chars) constantly trips flake8's E501,
+# a well-known standard conflict between the two tools, not a style choice.
+max-line-length = 88
+extend-ignore =
+    # E203: whitespace before ':' — black formats slices this way on purpose
+    # (e.g. `x[1 :2]`), conflicts with flake8's default PEP8 reading.
+    E203
+exclude = .venv,notebooks,.git,__pycache__,*.egg-info,build,dist

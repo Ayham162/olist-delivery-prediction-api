@@ -4,6 +4,7 @@ verification during development (predict.predict_one gave probability
 reconstruction of pipeline.ipynb's own transform with max abs diff 0.0) —
 reused here so that verification is now a permanent, automated test instead
 of a one-off scratch script."""
+
 import pytest
 
 CANONICAL_ORDER = dict(

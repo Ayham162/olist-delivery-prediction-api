@@ -2,6 +2,7 @@
 column names, same formulas, same zip_geoloc join — so a live request
 produces the same numbers the notebook produced for the same raw order.
 Any change here must be made in the notebook too, or the two silently drift."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -51,18 +52,26 @@ def add_distance(df: pd.DataFrame) -> pd.DataFrame:
     that downstream, so there's no separate fallback to maintain here."""
     zip_geoloc = get_zip_geoloc()
     df = df.merge(
-        zip_geoloc.rename(columns={
-            "zip_code_prefix": "customer_zip_code_prefix",
-            "lat": "customer_lat", "lng": "customer_lng",
-        }),
-        on="customer_zip_code_prefix", how="left",
+        zip_geoloc.rename(
+            columns={
+                "zip_code_prefix": "customer_zip_code_prefix",
+                "lat": "customer_lat",
+                "lng": "customer_lng",
+            }
+        ),
+        on="customer_zip_code_prefix",
+        how="left",
     )
     df = df.merge(
-        zip_geoloc.rename(columns={
-            "zip_code_prefix": "seller_zip_code_prefix",
-            "lat": "seller_lat", "lng": "seller_lng",
-        }),
-        on="seller_zip_code_prefix", how="left",
+        zip_geoloc.rename(
+            columns={
+                "zip_code_prefix": "seller_zip_code_prefix",
+                "lat": "seller_lat",
+                "lng": "seller_lng",
+            }
+        ),
+        on="seller_zip_code_prefix",
+        how="left",
     )
     df["distance_km"] = haversine_km(
         df["customer_lat"], df["customer_lng"], df["seller_lat"], df["seller_lng"]

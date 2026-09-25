@@ -1,0 +1,62 @@
+# Lives in THIS repo, not ../docker-compose.yml (that one belongs to the
+# outer Qafza/ course workspace, which isn't even a git repo). This stack is
+# self-contained on purpose — Definition-of-Done requires cloning this repo
+# alone and booting with one command.
+#
+# `db` is independent of the outer olist_postgres container: its own image
+# instance, volume, and a different host port (5433, not 5432) so both can
+# run at once without colliding. It starts empty — no Olist dataset load —
+# because /predict takes raw order fields directly and never queries
+# historical orders (see README's "What the inference service actually
+# needs"). Its actual job here is prediction_logs (src/inference_service/db.py).
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - prediction_logs_pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # Plain `depends_on: db` only waits for the container to START, not for
+      # Postgres to actually accept connections — it can still be
+      # initializing when the API tries to connect and crash on boot. This
+      # healthcheck + api's `condition: service_healthy` below closes that
+      # race. (Belt-and-suspenders: db.py's writes are non-fatal regardless —
+      # see its module docstring — so even a slow/failed healthcheck wouldn't
+      # take predictions down, only logging.)
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Internal container port (5432), not the host-mapped 5433 — api talks
+      # to db over the compose network via the service name, not localhost.
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Deliberately unset here: no mlflow service in this compose file yet
+      # (§5's documented, verified fallback), so the API falls straight
+      # through to the local joblib artifacts baked into the image —
+      # correctly, and without wasting a connection-timeout attempting a
+      # tracking server that doesn't exist in this stack.
+      # MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8000:8000"
+
+volumes:
+  prediction_logs_pgdata:
