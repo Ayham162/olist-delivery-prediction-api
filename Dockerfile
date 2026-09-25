@@ -10,7 +10,11 @@ WORKDIR /app
 # this layer caches independently of code changes (the standard Docker
 # speedup: `pip install` only reruns when requirements.txt itself changes).
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# --timeout 120: pip's default (15s per read) is too tight for some of these
+# wheels (scikit-learn, pandas, mlflow's deps) over a slower connection —
+# hit real ReadTimeoutErrors against files.pythonhosted.org building this,
+# not a hypothetical concern.
+RUN pip install --no-cache-dir --timeout 120 -r requirements.txt
 
 # Editable install (-e), deliberately, even in this "final" image: config.py
 # resolves PROJECT_ROOT from its own __file__ location relative to src/,
